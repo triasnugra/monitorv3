@@ -1,23 +1,63 @@
-name: update-monitor
+name: update-and-deploy
+
 on:
   schedule: [{ cron: '17 */3 * * *' }]
   workflow_dispatch:
-permissions: { contents: write }
-concurrency: { group: update-monitor, cancel-in-progress: false }
+  push:
+    branches: [main]
+    paths-ignore: ['data/**']
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update-and-deploy
+  cancel-in-progress: false
+
 jobs:
-  run:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
+
       - run: node scripts/fetch.mjs
       - run: node scripts/build.mjs
+
       - name: Commit data
-        if: always()
+        if: ${{ !cancelled() }}
         run: |
           git config user.name monitor-bot
           git config user.email monitor-bot@users.noreply.github.com
           git add data
           git diff --cached --quiet || (git commit -m "data: update $(date -u +%FT%TZ)" && git pull --rebase -q && git push)
+
+      - name: Susun situs
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p _site/data
+          cp index.html _site/
+          cp -r assets _site/
+          cp -r data/raw _site/data/ || true
+          cp data/graded.json data/fetch-log.json _site/data/ || true
+
+      - uses: actions/configure-pages@v5
+        if: ${{ !cancelled() }}
+      - uses: actions/upload-pages-artifact@v3
+        if: ${{ !cancelled() }}
+        with: { path: _site }
+
+  deploy:
+    needs: build
+    if: ${{ !cancelled() && needs.build.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.dep.outputs.page_url }}
+    steps:
+      - id: dep
+        uses: actions/deploy-pages@v4
