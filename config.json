@@ -1,0 +1,11 @@
+{
+  "mesin": {
+    "tn":      { "base": "https://triasnugra.github.io/tn/data/", "type": "eliz" },
+    "tnv2":    { "base": "https://triasnugra.github.io/tnv2/data/", "type": "eliz" },
+    "tnv2c2":  { "base": "https://triasnugra.github.io/tnv2c2/data/", "type": "eliz" },
+    "dseek":   { "base": "https://triasnugra.github.io/dseek/data/", "type": "eliz" },
+    "chatgpt": { "base": "https://triasnugra.github.io/chatgpt/data/", "type": "eliz" },
+    "crypto":  { "base": "https://triasnugra.github.io/crypto/data/", "type": "crypto" },
+    "grox":    { "base": "https://raw.githubusercontent.com/triasnugra/grox/main/data/", "type": "eliz", "optional": true }
+  }
+}
