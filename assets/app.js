@@ -74,7 +74,12 @@ function bd() {
 }
 function tb() {
   const m = $('#fm').value, a = $('#fa').value.trim().toUpperCase(), st = $('#fs').value, d1 = $('#fd1').value ? Date.parse($('#fd1').value) : 0, d2 = $('#fd2').value ? Date.parse($('#fd2').value) + 864e5 : 1e15;
-  const rows = D.rows.filter(r => (!m || r.mesin === m) && (!a || r.aset === a) && (!st || r.status_monitor === st) && r.t >= d1 && r.t < d2).sort((x, y) => y.t - x.t); tb.rows = rows;
+  let rows = D.rows.filter(r => (!m || r.mesin === m) && (!a || r.aset === a) && (!st || r.status_monitor === st) && r.t >= d1 && r.t < d2).sort((x, y) => y.t - x.t);
+  { const L = new Map(), out = []; // buang tampilan ganda: sinyal identik (mesin,aset,arah,entry,SL,TP) dari beberapa agen dgn selisih waktu <60 dtk; utamakan baris kept
+    for (const r of rows) { const k = [r.mesin, r.aset, r.arah, r.entry, r.sl, r.tp].join('|'), a = L.get(k) || L.set(k, []).get(k), i = a.findIndex(e => Math.abs(e.t - r.t) < 6e4);
+      if (i < 0) { a.push(r); out.push(r); } else if (r.kept && !a[i].kept) { out[out.indexOf(a[i])] = r; a[i] = r; } }
+    rows = out; }
+  tb.rows = rows;
   $('#fn').textContent = `${rows.length} baris`;
   $('#tbt').innerHTML = '<table><tr><th>Waktu UTC</th><th>Mesin</th><th>Aset</th><th>Arah</th><th>Entry</th><th>SL</th><th>TP</th><th>Status mesin</th><th>Status monitor</th><th>R kotor</th><th>R net</th><th>Catatan</th></tr>' + rows.slice(0, 500).map(r => `<tr><td>${dt(r.t)}</td><td>${r.mesin}</td><td>${esc(r.aset)}</td><td>${r.arah}</td><td>${r.entry}</td><td>${r.sl}</td><td>${r.tp}</td><td>${r.status_mesin ?? '–'}</td><td>${r.status_monitor}</td><td class="${cl(r.R_monitor)}">${f2(r.R_monitor)}</td><td class="${cl(r.R_net)}">${f2(r.R_net)}</td><td>${r.fork_dup ? '<span class="tag">fork</span>' : ''}${esc(r.ket || '')}</td></tr>`).join('') + '</table>' + (rows.length > 500 ? '<small>Menampilkan 500 pertama; CSV memuat semua.</small>' : '');
 }
