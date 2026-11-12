@@ -27,7 +27,7 @@ function stats(rows) {
 const ci = c => (c ? `[${pc(c[0])}–${pc(c[1])}]` : '');
 const td = (v, n, cls = '') => `<td class="${cls}">${v}<small>${n ?? ''}</small></td>`;
 let D, LOG, RAW = {};
-const scoped = () => D.rows.filter(r => $('#scope').value === 'a' || r.kept);
+const scoped = () => D.rows.filter(r => ($('#scope').value === 'a' ? r.milik !== 'warisan_v1' : r.kept)); // 'semua' = hanya analisis milik mesin itu (salinan v1 di mesin turunan tidak dihitung)
 function lb() {
   const rows = scoped(), H = ['Mesin', 'N sinyal', 'N terisi', 'Fill-rate', 'Win-rate (a) TP vs SL', 'Win-rate (b) +kedaluwarsa', 'Avg R kotor', 'Avg R net', 'Expectancy net CI95', 'Profit factor', 'Max DD (R)', 'Update'];
   let h = `<table><tr>${H.map(x => `<th>${x}</th>`).join('')}</tr>`;
@@ -108,6 +108,7 @@ async function init() {
   $('#gen').textContent = `Data dinilai: ${dt(Date.parse(D.generated))} UTC · aturan ${D.rules} · biaya ${D.cost_pct}%`;
   const W = []; for (const m of MS) { const L = LOG[m]; if (!L) { if (m === 'grox') W.push('grox: tidak tersedia'); continue; } if (L.ok === false) W.push(`${m}: BASI, fetch gagal (${L.error}); memakai data lama dari ${L.lastOk ?? '?'}`); else if (NOW - Date.parse(L.lastOk) > 6 * 36e5) W.push(`${m}: data ${((NOW - Date.parse(L.lastOk)) / 36e5).toFixed(1)} jam lalu (>6 jam)`); if (L.warn) W.push(`${m}: ${L.warn}`); }
   if (NOW - Date.parse(D.generated) > 6 * 36e5) W.push('graded.json lebih dari 6 jam');
+  for (const w of (D.kanonik?.peringatan || [])) W.push(`${w.mesin}: ${w.t}`);
   $('#warn').innerHTML = W.map(w => `<div>${esc(w)}</div>`).join('');
   for (const m of MS) $('#fm').add(new Option(m, m)), $('#bm').add(new Option(m, m)); $('#bm').insertAdjacentHTML('afterbegin', '<option value="">Semua</option>'); $('#bm').value = '';
   for (const s of ['TP', 'SL', 'KEDALUWARSA_TERISI', 'TIDAK_TERISI', 'OPEN', 'NO_TRADE', 'TIDAK_VALID']) $('#fs').add(new Option(s, s));
