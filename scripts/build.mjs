@@ -1,6 +1,7 @@
 // Normalisasi + grading seragam (aturan baku trade-sim.mjs, candle Binance 1H + 1m) -> data/graded.json
 import fs from 'node:fs';
 import { gradeTrade, mapK, H1 } from './trade-sim.mjs';
+import { buildCanonical } from './signals-core.mjs';
 const RULES = 'baku-1-5.v1', FEE = 0.05, SLIP = 0.05, COST = 2 * FEE + SLIP; // % per trade (2 sisi + slip), sama dgn protokol
 const cfg = JSON.parse(fs.readFileSync('config.json')).mesin, NOW = Date.now();
 const rd = f => (fs.existsSync(f) ? JSON.parse(fs.readFileSync(f)) : null);
@@ -37,6 +38,20 @@ for (const [m, c] of Object.entries(cfg)) {
     rows.push(r);
   }
 }
+// Sumber data tunggal (signals-core.mjs): kepemilikan analisis + tanggal UTC/WIB, sama untuk semua monitor.
+const KJ = {}, KP = {};
+for (const m of Object.keys(cfg)) {
+  const j = rd(`data/raw/${m}.json`); if (!j) continue; KJ[m] = j;
+  KP[m] = ['forward-protocol.json', 'forward-protocol-v2.json'].map(f => rd(`data/raw/${m}__${f}`)).filter(Boolean);
+}
+const KAN = buildCanonical(KJ, KP), kmap = new Map(KAN.rows.map(k => [`${k.mesin}|${k.aset}|${k.arah}|${k.t}`, k]));
+for (const r of rows) {
+  const k = kmap.get(`${r.mesin}|${String(r.aset).toUpperCase()}|${r.arah}|${r.t}`);
+  r.milik = k ? k.milik : 'tidak_diketahui'; r.legacy = k?.legacy ? 1 : 0;
+  r.tanggal_utc = k?.tanggal_utc ?? null; r.tanggal_wib = k?.tanggal_wib ?? null;
+}
+// Baris yang dibuang kanonik sebagai kembar (dua agen mencatat setup sama <= 60 dtk, mis. tnv2) tidak dihitung dua kali.
+for (let i = rows.length - 1; i >= 0; i--) if (rows[i].milik === 'tidak_diketahui' && Number.isFinite(rows[i].t)) { dupes[rows[i].mesin]++; rows.splice(i, 1); }
 const bad = r => !['LONG', 'SHORT'].includes(r.arah) || ![r.entry, r.sl, r.tp, r.t, r.due].every(Number.isFinite) || r.entry === r.sl || !r.aset
   || (r.arah === 'LONG' ? !(r.sl < r.entry && r.tp > r.entry) : !(r.sl > r.entry && r.tp < r.entry));
 const fp = r => [r.entry, r.sl, r.tp, r.t, r.due].join('|');
@@ -73,6 +88,7 @@ const protocols = [], RES = h => ['TP', 'SL', 'kedaluwarsa', 'tidak terisi'].inc
 for (const m of Object.keys(cfg)) {
   const mr = rows.filter(r => r.mesin === m), ps = [];
   for (const f of ['forward-protocol.json', 'forward-protocol-v2.json']) { const P = rd(`data/raw/${m}__${f}`); if (P && P.engine) ps.push({ f, P }); }
+  ps.sort((a, b) => (b.P.mulai_ms || 0) - (a.P.mulai_ms || 0)); ps.length = Math.min(ps.length, 1); // hanya protokol aktif
   for (const r of mr) { r.proto = null; r.kept = ps.length ? 0 : 1; }
   for (const { f, P } of ps) {
     const same = mr.filter(r => r.fwd && r.agen === P.agen && r.t >= P.mulai_ms && ['LONG', 'SHORT'].includes(r.arah) && !['tidak valid', 'NO_TRADE'].includes(r.hasil_mesin) && r.engine === P.engine).sort((a, b) => a.t - b.t);
@@ -86,5 +102,5 @@ for (const m of Object.keys(cfg)) {
       min_trade: P.syarat_evaluasi?.min_trade_terisi, min_minggu: P.syarat_evaluasi?.min_minggu_berbeda, versi: P.versi });
   }
 }
-fs.writeFileSync('data/graded.json', JSON.stringify({ generated: new Date(NOW).toISOString(), rules: RULES, cost_pct: COST, rawN, dupes, protocols, rows }));
+fs.writeFileSync('data/graded.json', JSON.stringify({ generated: new Date(NOW).toISOString(), rules: RULES, cost_pct: COST, rawN, dupes, protocols, kanonik: { aturan: KAN.aturan, hash_v1: KAN.hash_v1, laporan: KAN.laporan, peringatan: KAN.peringatan }, rows }));
 console.log('selesai', rows.length);
