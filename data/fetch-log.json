@@ -1,42 +1,42 @@
 {
  "tn": {
   "ok": true,
-  "lastOk": "2026-11-21T02:14:18.351Z",
-  "rows": 765,
-  "sha": "1b6956b8c716eccf",
+  "lastOk": "2026-11-21T11:01:22.785Z",
+  "rows": 788,
+  "sha": "ad8331740185930d",
   "error": null
  },
  "tnv2": {
   "ok": true,
-  "lastOk": "2026-11-21T02:14:18.351Z",
+  "lastOk": "2026-11-21T11:01:22.785Z",
   "rows": 767,
-  "sha": "0be4b7c3efcee39d",
+  "sha": "08071721d860fc34",
   "error": null
  },
  "tnv2c2": {
   "ok": true,
-  "lastOk": "2026-11-21T02:14:18.351Z",
+  "lastOk": "2026-11-21T11:01:22.785Z",
   "rows": 324,
   "sha": "68a97d2b58eae32a",
   "error": null
  },
  "dseek": {
   "ok": true,
-  "lastOk": "2026-11-21T02:14:18.351Z",
+  "lastOk": "2026-11-21T11:01:22.785Z",
   "rows": 20,
-  "sha": "2f8f9e25a2359d61",
+  "sha": "eb1d9dd9bce771db",
   "error": null
  },
  "chatgpt": {
   "ok": true,
-  "lastOk": "2026-11-21T02:14:18.351Z",
-  "rows": 666,
-  "sha": "083ef279abf92701",
+  "lastOk": "2026-11-21T11:01:22.785Z",
+  "rows": 686,
+  "sha": "b1da1ade477059fd",
   "error": null
  },
  "crypto": {
   "ok": true,
-  "lastOk": "2026-11-21T02:14:18.351Z",
+  "lastOk": "2026-11-21T11:01:22.785Z",
   "rows": 788,
   "sha": "8d3223c4ec6ea764",
   "error": null
@@ -44,6 +44,6 @@
  "grox": {
   "ok": false,
   "error": "HTTP 404",
-  "lastTry": "2026-11-21T02:14:18.351Z"
+  "lastTry": "2026-11-21T11:01:22.785Z"
  }
 }
